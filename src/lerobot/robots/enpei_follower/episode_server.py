@@ -88,6 +88,13 @@ class EpisodeAPP:
         """
         command = {'action': 'angle_mode', 'params': [angles, speed_ratio]}
         return self.send_command(command)
+    
+    def sync_motor_angles(self):
+        """
+        同步电机角度
+        """
+        command = {'action': 'sync_motor_angles', 'params': []}
+        return self.send_command(command)
 
     def move_xyz_rotation(self, position, orientation, rotation_order="zyx", speed_ratio=1):
         """

@@ -134,7 +134,7 @@ class EnpeiFollower(Robot):
             logging.info("Connected to EnpeiRobot controller")
 
             # 移到默认位置
-            # 使能两个机械臂
+            
             fixed_degrees = [180, 90, 83, 210, 110, 210, 90]
             t = self.controller.angle_mode(fixed_degrees)
             time.sleep(t)
@@ -324,4 +324,7 @@ class EnpeiFollower(Robot):
             cam.disconnect()
 
         logger.info(f"{self} disconnected.")
+        # 因为dynamic_move是开环控制，所以在断开连接时，需要同步一次角度
+        self.controller.sync_motor_angles()
+        logger.info("已经断开机械臂的链接")
         self.episode1_is_connected = False
