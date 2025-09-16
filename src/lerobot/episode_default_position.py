@@ -42,7 +42,7 @@ def move_to_default_position(ip='localhost', port=12345):
         time.sleep(t)
 
         # 夹爪运动到10度
-        controller.servo_gripper(10)
+        controller.servo_gripper(40)
         logging.info(f"Moving to default position, estimated time: {t:.2f}s")
         
         # 等待移动完成
