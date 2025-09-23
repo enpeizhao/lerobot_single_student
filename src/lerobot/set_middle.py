@@ -138,6 +138,7 @@ def set_middle(cfg: SetMiddleConfig):
         
         while True:
             # 读取所有电机的当前位置
+            start_time = time.perf_counter()
             positions = {}
             for motor_id in range(cfg.motor_range[0], cfg.motor_range[1] + 1):
                 positions[motor_id] = read_raw_position(controller, motor_id)
@@ -145,7 +146,7 @@ def set_middle(cfg: SetMiddleConfig):
             # 显示原始位置
             lock_status = "🔒" if motors_locked else "🔓"
             positions_str = ", ".join([f"电机 {i}: {positions[i]}" for i in range(cfg.motor_range[0], cfg.motor_range[1] + 1)])
-            print(f"原始位置: {positions_str} {lock_status}", end="\r")
+            # print(f"原始位置: {positions_str} {lock_status}", end="\r")
             
             # 检查键盘输入
             if input_available():
@@ -159,6 +160,11 @@ def set_middle(cfg: SetMiddleConfig):
             
             # 小延迟，防止过度轮询
             # time.sleep(0.1)
+
+            # 计算FPS
+            end_time = time.perf_counter()
+            fps = 1 / (end_time - start_time)
+            print(f"原始位置: {positions_str} {lock_status} | FPS: {fps:.2f}", end="\r")
             
     except KeyboardInterrupt:
         print("\n用户停止监控。")
