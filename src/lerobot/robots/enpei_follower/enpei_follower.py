@@ -132,7 +132,7 @@ class EnpeiFollower(Robot):
             
             self.controller = EpisodeAPP(ip=self.config.ip_address, port=self.config.port)
             logging.info("Connected to EnpeiRobot controller")
-
+            self.controller.sync_motor_angles()
             # 移到默认位置
             
             fixed_degrees = [180, 90, 83, 210, 110, 210, 90]
