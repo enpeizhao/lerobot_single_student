@@ -192,15 +192,15 @@ class EnpeiFollower(Robot):
             if obs_list[i] is not None:
                 # 计算当前关节角度对应的脉冲数
                 self.current_joint_pulses[i] = int(3200 * self.gear_ratios[i] * obs_list[i] / 360)
-                
-        # 如果使用弧度，则将角度转换为弧度（夹爪已经做过）
-        if self.use_radian:
-            obs_list = [angle * np.pi / 180.0 for angle in obs_list]
 
         # 使用上次的夹爪角度
         gripper_angle_mapped = self.last_observation_gripper
         # 添加夹爪角度
         obs_list.append(gripper_angle_mapped)
+
+        # 如果使用弧度，则将角度转换为弧度
+        if self.use_radian:
+            obs_list = [angle * np.pi / 180.0 for angle in obs_list]
         
         motor_names = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6", "gripper"]
 
