@@ -276,7 +276,7 @@ def test_openpi_client(cfg: ClientConfig):
                 # 发送动作字典到机器人
                 # 跳过一些步骤，因为observation的滞后性，另外，可以让机械臂始终停不下来，保持顺畅
                 # 理论上越大越好
-                if i <= 20 or i > 50:
+                if i <= 5 or i > 50:
                     # print(f"即将跳过:{i}")
                     continue
                 else:
