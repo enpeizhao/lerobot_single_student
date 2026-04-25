@@ -326,5 +326,6 @@ class EnpeiFollower(Robot):
         logger.info(f"{self} disconnected.")
         # 因为dynamic_move是开环控制，所以在断开连接时，需要同步一次角度
         self.controller.sync_motor_angles()
+        self.controller._close_connection()
         logger.info("已经断开机械臂的链接")
         self.episode1_is_connected = False

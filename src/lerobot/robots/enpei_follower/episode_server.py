@@ -13,54 +13,76 @@ class EpisodeAPP:
     def __init__(self, ip='localhost', port=12345):
         """
         初始化客户端，设置服务器的IP地址和端口号。
+        使用持久连接，避免每次命令都创建新的TCP连接。
         """
         self.server_address = (ip, port)
+        self._socket = None
+
+    def _ensure_connected(self):
+        """确保持久连接可用，如果断开则重新连接。"""
+        if self._socket is None:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            self._socket.connect(self.server_address)
+            logging.info(f"已建立到 {self.server_address} 的持久连接")
+
+    def _close_connection(self):
+        """关闭持久连接。"""
+        if self._socket is not None:
+            try:
+                self._socket.close()
+            except Exception:
+                pass
+            self._socket = None
 
     def send_command(self, command):
         """
         发送命令到服务器并接收返回值。
-        
+        使用持久TCP连接，连接断开时自动重连一次。
+
         参数：
             command (dict): 包含动作和参数的命令字典。
-        
+
         返回：
             从服务器接收到的结果（反序列化后的对象），若发生异常则返回 None。
         """
-        try:
-            # 使用 with 确保 socket 在使用后能正确关闭
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-                # 连接到服务器
-                client_socket.connect(self.server_address)
-                
-                # 将命令序列化为字节流（使用 JSON）
+        for attempt in range(2):
+            try:
+                self._ensure_connected()
+
                 data = json.dumps(command).encode('utf-8')
                 data_length = len(data)
-                
-                # 先发送数据长度（8字节）给服务器，便于服务器知道接收数据的大小
-                client_socket.sendall(data_length.to_bytes(8, byteorder='big'))
-                # 发送实际的数据
-                client_socket.sendall(data)
-                
-                # 接收服务器返回的数据长度（8字节）
-                response_length = client_socket.recv(8)
+
+                self._socket.sendall(data_length.to_bytes(8, byteorder='big'))
+                self._socket.sendall(data)
+
+                response_length = self._recv_exact(8)
                 if not response_length:
-                    return None
+                    raise ConnectionError("服务器未返回响应长度")
                 response_length = int.from_bytes(response_length, byteorder='big')
-                
-                # 根据数据长度接收完整的数据包
-                response_data = b''
-                while len(response_data) < response_length:
-                    packet = client_socket.recv(response_length - len(response_data))
-                    if not packet:
-                        break
-                    response_data += packet
-                
-                # 将接收到的字节流反序列化为 Python 对象（使用 JSON）
+
+                response_data = self._recv_exact(response_length)
+                if not response_data:
+                    raise ConnectionError("服务器未返回完整响应数据")
+
                 result = json.loads(response_data.decode('utf-8'))
                 return result
-        except Exception as e:
-            logging.error(f"send_command 出错: {e}")
-            return None
+            except Exception as e:
+                logging.error(f"send_command 出错 (尝试 {attempt+1}/2): {e}")
+                self._close_connection()
+                if attempt == 0:
+                    continue
+                return None
+
+    def _recv_exact(self, num_bytes):
+        """接收指定字节数的数据。"""
+        data = b''
+        while len(data) < num_bytes:
+            packet = self._socket.recv(num_bytes - len(data))
+            if not packet:
+                return None
+            data += packet
+        return data
 
     def emergency_stop(self, enable):
         """
